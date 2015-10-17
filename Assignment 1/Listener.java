@@ -14,13 +14,53 @@ public class Listener
    {
       String serverName = args[0];
       int port = Integer.parseInt(args[1]);
-      DataInputStream streamIn ;
-      DataOutputStream streamOut;
+      
+      Listener listener = new Listener();
       
 	  // create connection to server
-	  // send the string  "LISTENER" to server first!!
-	  // continuously receive messages from server
-      // using stdout to print out messages Received
-      // do not close the connection- keep listening to further messages from the server.
+      Socket socket = listener.connect(serverName, port);
+      if (socket != null) {
+    	  // send the string  "LISTENER" to server first!!
+    	  listener.writeToServer(socket, "Listener");
+    	  listener.readFromServer(socket);
+      }
    }
+    
+	private Socket connect(String serverName, int port) {
+		try {
+			//connect to server
+			return new Socket(serverName, port);
+		} catch(IOException ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
+	
+	private void writeToServer(Socket socket, String message) {
+		try {
+			PrintStream writer = new PrintStream(socket.getOutputStream(), true, "UTF-8");
+			writer.print(message);
+			writer.close();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
+	
+	private void readFromServer(Socket socket) {
+		try {
+			  // continuously receive messages from server
+		      // do not close the connection- keep listening to further messages from the server.
+			while(true) {
+				InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
+				BufferedReader reader = new BufferedReader(streamReader);
+				String currentLine;
+				while((currentLine = reader.readLine()) != null) {
+				      // using stdout to print out messages Received
+					System.out.println(currentLine);
+				}
+			}
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
 }
