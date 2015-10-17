@@ -39,8 +39,8 @@ public class Listener
 	private void writeToServer(Socket socket, String message) {
 		try {
 			PrintStream writer = new PrintStream(socket.getOutputStream(), true, "UTF-8");
-			writer.print(message);
-			writer.close();
+			writer.println(message);
+			writer.flush();
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -50,9 +50,9 @@ public class Listener
 		try {
 			  // continuously receive messages from server
 		      // do not close the connection- keep listening to further messages from the server.
+			InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
+			BufferedReader reader = new BufferedReader(streamReader);
 			while(true) {
-				InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
-				BufferedReader reader = new BufferedReader(streamReader);
 				String currentLine;
 				while((currentLine = reader.readLine()) != null) {
 				      // using stdout to print out messages Received
