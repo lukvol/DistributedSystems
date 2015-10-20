@@ -1,5 +1,9 @@
 /*
  * (c) University of Zurich 2014
+ * 
+ * Author:
+ * Lukas Vollenweider (13-751-888)
+ * 
  */
 
 package Assignment1;
@@ -20,18 +24,9 @@ public class Producer {
 		Socket socket = producer.connect(serverName, port);
 		if (socket != null) {
 			// send the string "PRODUCER" to server first
-			producer.writeToServer(socket, "PRODUCER");
-			// read messages from input file line by line
-			// put the client name and colon in front of each message
-			// e.g., clientName:....
-			// send message until you find ".bye" in the input file
+			producer.writeLineToServer(socket, "PRODUCER");
+			//parse file and write it line by line to server
 			producer.parseFileToServer(inputFileName, clientName, socket);
-		}
-		// close connection
-		try {
-			socket.close();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 	
@@ -45,11 +40,12 @@ public class Producer {
 		}
 	}
 	
-	private void writeToServer(Socket socket, String message) {
+	private void writeLineToServer(Socket socket, String message) {
 		try {
+			//create output stream to write to server
 			PrintStream writer = new PrintStream(socket.getOutputStream(), true, "UTF-8");
-			writer.print(message);
-			writer.close();
+			writer.println(message);
+			writer.flush();
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -57,12 +53,17 @@ public class Producer {
 	
 	private void parseFileToServer(String fileName, String clientName, Socket socket) {
 		try {
+			//load file and read it line by line
+			//if there is a line and the line is not ".bye", than send it directly to server
 			BufferedReader reader = new BufferedReader(new FileReader(fileName));
-			String currentLine;
-			while (((currentLine = reader.readLine()) != ".bye") && (currentLine != null)) {
+			String currentLine = reader.readLine();
+			while ((!(currentLine.equals(".bye")) && (currentLine != null))) {
 				String producerMessage = clientName + ":" + currentLine;
-				writeToServer(socket, producerMessage);
+				writeLineToServer(socket, producerMessage);
+				currentLine = reader.readLine();
 			}
+			//close connection: if a stream get closed, the socket get closed to so there is no need
+			//to close the socket separately
 			reader.close();
 		}
 		catch(IOException ex) {
@@ -70,4 +71,3 @@ public class Producer {
 		}
 	}
 }
-

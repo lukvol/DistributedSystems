@@ -1,5 +1,9 @@
 /*
  * (c) University of Zurich 2014
+ * 
+ * Author:
+ * Lukas Vollenweider (13-751-888)
+ * 
  */
 
 package Assignment1;
@@ -13,36 +17,26 @@ public class Server {
   // the data structure to store incoming messages, you are also free to implement your own data structure.
   static LinkedBlockingQueue<String> messageStore =  new LinkedBlockingQueue<String>();
 
-  // Listen for incoming client connections and handle them
   public static void main(String[] args) {
 	//port number to listen to
     port = Integer.parseInt(args[0]);
     
     Server server = new Server();
+    //starts the server
     server.runServer(port);
-    
-    // this is a blocking operation
-    // which means the server listens to connections infinitely
-    // when a new request is accepted, spawn a new thread to handle the request
-    // keep listening to further requests
-    // if you want, you can use the class HandleClient to process client requests
-    // the first message for each new client connection is either "PRODUCER" or "LISTENER"
-
-    /*
-     * Your implementation goes here
-     */
-    
   }
 
   private void runServer(int port) {
 	  try {
-		// the server listens to incoming connections
+		//create the server socket which handles the connections
 		  ServerSocket serverSocket = new ServerSocket(port);
-		  
+		  //listen to new connections forever
 		  while (true) {
+			  //if a client connects to the server, the connection will be accepted
 			  Socket connectionToClient = serverSocket.accept();
+			  //gets the type of the client
 			  String clientType = Server.readLineFromClient(connectionToClient);
-			  System.out.println(clientType);
+			  //starts a new thread for the client
 			  Runnable client = new HandleClient(clientType, connectionToClient);
 			  Thread clientThread = new Thread(client);
 			  clientThread.start();
@@ -54,6 +48,7 @@ public class Server {
   
   public static String readLineFromClient(Socket socket) {
 	  try {
+		  //creates an input stream and reads a line from the client
 		  InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
 		  BufferedReader reader = new BufferedReader(streamReader);
 		  String line = reader.readLine();
@@ -63,21 +58,8 @@ public class Server {
 		  return null;
 	  }   
   }
-  
-  public static void printToClient(Socket socket) {
-	  try {
-		  PrintStream writer = new PrintStream(socket.getOutputStream(), true, "UTF-8");
-		  for (String line : Server.messageStore) {
-			  writer.println(line);
-		  }
-	  } catch (IOException ex) {
-		  ex.printStackTrace();
-	  }
-  }
 }
 
-// you can use this class to handle incoming client requests
-// you are also free to implement your own class
 class HandleClient implements Runnable {
 	private enum Client {Listener, Producer};
 	Client currentClient;
@@ -85,9 +67,9 @@ class HandleClient implements Runnable {
 	
 	public HandleClient(String type, Socket clientSocket) {
 		this.clientSocket = clientSocket;
-		if (type.equals("Listener")) {
+		if (type.equals("LISTENER")) {
 			currentClient = Client.Listener;
-		} else if (type.equals("Producer")) {
+		} else if (type.equals("PRODUCER")) {
 			currentClient = Client.Producer;
 		} else {
 			return;
@@ -97,15 +79,34 @@ class HandleClient implements Runnable {
 	public void run () {
 		try {
 			if (currentClient == Client.Listener) {
-				if (Server.messageStore.isEmpty()) {
-					PrintStream writer = new PrintStream(clientSocket.getOutputStream(), true, "UTF-8");
-					writer.println("SERVER: There are no messages stored!");
-					writer.flush();
-				} else {
-					Server.printToClient(clientSocket);
+				//if client is listener, we print the messages from the producers
+				PrintStream writer = new PrintStream(clientSocket.getOutputStream(), true, "UTF-8");
+				//like an iterator
+				//points to the first element which have to be read
+				int pointer = 0;
+				//the listener listens forever
+				while (true) {
+					//if the pointer isn't at the end of the messageStore linkedQueue
+					//there are new messages and we need to fetch these
+					if (pointer != Server.messageStore.size()) {
+						String[] messageStorage = Server.messageStore.toArray(new String[0]);
+						for (; pointer < messageStorage.length; pointer++) {
+							writer.println(messageStorage[pointer]);
+							writer.flush();
+						}
+					}
 				}
-			} else {
-				
+			}
+			//else is sufficient since we use an enum
+			else {
+				//creates an input stream to read lines from producers
+				InputStreamReader streamReader = new InputStreamReader(clientSocket.getInputStream());
+				BufferedReader reader = new BufferedReader(streamReader);
+				String currentLine = reader.readLine();
+				while(currentLine != null) {
+					Server.messageStore.add(currentLine);
+					currentLine = reader.readLine();
+				}
 			}
 		} catch (IOException ex) {
 			ex.printStackTrace();
