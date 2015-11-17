@@ -1,1 +1,18 @@
+Wordcount.java: Mapreduce job(s) to count the total number of words in the file plot_summaries.txt. 
+The output file should contain only one number: the total number of words.
 
+WordFreq.java: Mapreduce job(s) to find 10 most frequent words in the plot-summaries dataset. 
+The words should be ordered in descending order by their number of occurrences in the dataset.
+
+WordFreqStop.java Do the same task of WordFreq, but excluding  those stop words in the stop.txt.
+
+Join.java: Mapreduce job(s) to join the character.metadata.tsv and movie.metadata.tsv datasets and create a file, 
+which has the following fields:
+i. Wikipedia Movie ID
+ii. Movie Name
+iii, iv, v, … Actor Name (possibly) multiple
+
+Index.java_ Mapreduce job(s) to create an inverted index for the plot-summaries dataset. 
+The index should be a mapping from the term to the Wikipedia movie ID and the number of occurrences. 
+For example, if the term "assignment" occurs 5 times in the plot summary of the movie whose Wikipedia movie ID is 42, 
+then the index should contain a mapping from "assignment" to 42 and 5.
